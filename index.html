@@ -2,8 +2,8 @@
 <div id="dock">
   <div class="dock-item" onclick="openTerminal()">
     <div class="icon-layer">
-      <!-- Working transparent terminal icon -->
-      <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" alt="Terminal">
+      <!-- Good transparent terminal icon -->
+      <img src="https://hexmos.com/freedevtools/png_icons/terminal/terminal-logos/regular-terminal.png" alt="Terminal">
       <div class="reflection"></div>
     </div>
   </div>
@@ -22,11 +22,11 @@ body {
   background: #0f111a;
 }
 
-/* Compact macOS‑style dock */
+/* Dock */
 #dock {
   position: fixed;
   bottom: 12px;
-  width: 260px; /* compact width */
+  width: 260px;
   left: 50%;
   transform: translateX(-50%);
   height: 60px;
@@ -88,7 +88,7 @@ body {
   flex-direction: column;
 }
 
-/* Drag from title bar */
+/* Title (drag handle) */
 .title {
   font-size: 14px;
   font-weight: bold;
@@ -116,40 +116,48 @@ body {
   background: #0f111a;
   color: #00ffcc;
   outline: none;
-  font-family: 'Fira Code', monospace;
 }
 </style>
 
 <script>
-// Drag terminal window only by title bar
+// Show terminal on dock icon click
+function openTerminal() {
+  win.style.display = 'flex';
+}
+
+// Mobile & desktop friendly drag using pointer events
 let win = document.getElementById("terminal");
 let title = win.querySelector(".title");
 
-title.onmousedown = function(e) {
-  let offsetX = e.clientX - win.offsetLeft;
-  let offsetY = e.clientY - win.offsetTop;
-  document.onmousemove = function(e) {
-    win.style.left = e.clientX - offsetX + "px";
-    win.style.top = e.clientY - offsetY + "px";
-  };
-  document.onmouseup = function() {
-    document.onmousemove = null;
-  };
-};
+let posX = 0, posY = 0, isDragging = false;
 
-// Show terminal on dock icon click
-function openTerminal() {
-  win.style.display = "flex";
-}
+title.addEventListener("pointerdown", function(e) {
+  isDragging = true;
+  title.setPointerCapture(e.pointerId);
+
+  posX = e.clientX - win.offsetLeft;
+  posY = e.clientY - win.offsetTop;
+});
+
+title.addEventListener("pointermove", function(e) {
+  if (!isDragging) return;
+  win.style.left = e.clientX - posX + "px";
+  win.style.top = e.clientY - posY + "px";
+});
+
+title.addEventListener("pointerup", function(e) {
+  isDragging = false;
+  title.releasePointerCapture(e.pointerId);
+});
 
 // Terminal command logic
 let cmd = document.getElementById("cmd");
 let output = document.getElementById("output");
 
 cmd.addEventListener("keydown", function(e) {
-  if(e.key === "Enter") {
+  if (e.key === "Enter") {
     let text = cmd.value.trim();
-    if(text === "whoami") {
+    if (text === "whoami") {
       output.innerHTML += "<p>/</p>";
     } else {
       output.innerHTML += "<p>Unknown command: " + text + "</p>";
