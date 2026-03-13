@@ -1,9 +1,9 @@
-<!-- HyperDesk Compact Dock + Modern Terminal -->
+<<!-- HyperDesk Dock + Mobile-Friendly Terminal -->
 <div id="dock">
   <div class="dock-item" onclick="openTerminal()">
     <div class="icon-layer">
-      <!-- Good transparent terminal icon -->
-      <img src="https://hexmos.com/freedevtools/png_icons/terminal/terminal-logos/regular-terminal.png" alt="Terminal">
+      <!-- Stable terminal SVG icon from GitHub -->
+      <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/bash/bash-original.svg" alt="Terminal">
       <div class="reflection"></div>
     </div>
   </div>
@@ -20,6 +20,7 @@ body {
   margin: 0;
   font-family: 'Fira Code', monospace;
   background: #0f111a;
+  overflow-x: hidden;
 }
 
 /* Dock */
@@ -125,13 +126,14 @@ function openTerminal() {
   win.style.display = 'flex';
 }
 
-// Mobile & desktop friendly drag using pointer events
+// Drag terminal on desktop & mobile without scrolling
 let win = document.getElementById("terminal");
 let title = win.querySelector(".title");
 
 let posX = 0, posY = 0, isDragging = false;
 
 title.addEventListener("pointerdown", function(e) {
+  e.preventDefault(); // prevent page scrolling
   isDragging = true;
   title.setPointerCapture(e.pointerId);
 
@@ -141,6 +143,7 @@ title.addEventListener("pointerdown", function(e) {
 
 title.addEventListener("pointermove", function(e) {
   if (!isDragging) return;
+  e.preventDefault(); // prevent page scrolling
   win.style.left = e.clientX - posX + "px";
   win.style.top = e.clientY - posY + "px";
 });
