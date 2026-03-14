@@ -2,717 +2,102 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <style>
-
-body{
-margin:0;
-background:#0f111a;
-font-family:monospace;
-height:100vh;
-overflow:hidden;
-}
-
-/* DOCK */
-
-#dock{
-position:fixed;
-bottom:10px;
-left:50%;
-transform:translateX(-50%);
-width:240px;
-height:65px;
-display:flex;
-justify-content:center;
-align-items:center;
-background:rgba(40,40,40,.45);
-backdrop-filter:blur(14px);
-border-radius:20px;
-z-index:1000;
-}
-
-.dock-item img{
-width:50px;
-height:50px;
-cursor:pointer;
-transition:.2s;
-}
-
-.dock-item img:hover{
-transform:scale(1.35);
-}
-
-/* WINDOW */
-
-.window{
-position:absolute;
-width:360px;
-height:220px;
-background:#1c1c2e;
-border-radius:28px;
-display:none;
-flex-direction:column;
-box-shadow:0 25px 60px rgba(0,0,0,.7);
-overflow:hidden;
-}
-
-/* TITLE BAR */
-
-.title{
-background:#2a2a3f;
-color:white;
-padding:6px;
-cursor:grab;
-display:flex;
-align-items:center;
-gap:8px;
-touch-action:none;
-}
-
-/* MAC BUTTONS */
-
-.winbtn{
-width:12px;
-height:12px;
-border-radius:50%;
-cursor:pointer;
-}
-
-.close{background:#ff5f57}
-.min{background:#febc2e}
-.max{background:#28c840}
-
-/* TERMINAL */
-
-#output{
-flex:1;
-padding:10px;
-overflow:auto;
-background:#0f111a;
-color:#00ffcc;
-}
-
-#cmd{
-border:none;
-border-top:1px solid #333;
-background:#0f111a;
-color:#00ffcc;
-padding:8px;
-outline:none;
-}
-
-/* FILE MANAGER */
-
-.file-manager {
-    flex:1;
-    padding:10px;
-    overflow:auto;
-    background:#0f111a;
-    color:#00ffcc;
-    display:flex;
-    flex-direction:column;
-}
-
-.folder-input {
-    border:none;
-    background:#2a2a3f;
-    color:#00ffcc;
-    padding:8px;
-    margin-bottom:8px;
-    outline:none;
-}
-
-.folder-list {
-    list-style-type:none;
-    padding:0;
-    margin:0;
-    flex:1;
-    overflow-y:auto;
-}
-
-.folder-item {
-    padding:6px;
-    cursor:pointer;
-    border-radius:4px;
-    margin:2px 0;
-}
-
-.folder-item:hover {
-    background-color:#2a2a3f;
-}
-
-.delete-btn {
-    float:right;
-    background:#ff5f57;
-    color:white;
-    border:none;
-    padding:2px 6px;
-    cursor:pointer;
-    border-radius:3px;
-    font-size:12px;
-}
-
-.delete-btn:hover {
-    opacity:0.8;
-}
-
-.breadcrumb {
-    margin:0 0 10px 0;
-    padding:0;
-    list-style-type:none;
-    display:flex;
-    gap:5px;
-}
-
-.breadcrumb li {
-    cursor:pointer;
-}
-
-.breadcrumb li:not(:last-child)::after {
-    content:' > ';
-    margin-left:5px;
-    cursor:default;
-}
-
-/* RESIZE HANDLES */
-
-.resize{
-position:absolute;
-width:16px;
-height:16px;
-background:rgba(255,255,255,.25);
-border-radius:50%;
-}
-
-.resize:hover{
-background:#00ffcc;
-}
-
-.br{bottom:0;right:0;cursor:nwse-resize}
-.bl{bottom:0;left:0;cursor:nesw-resize}
-.tr{top:0;right:0;cursor:nesw-resize}
-.tl{top:0;left:0;cursor:nwse-resize}
-
+body{margin:0;background:#0f111a;font-family:monospace;height:100vh;overflow:hidden;}
+#dock{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:300px;height:65px;display:flex;justify-content:center;align-items:center;background:rgba(40,40,40,.45);backdrop-filter:blur(14px);border-radius:20px;z-index:1000;}
+.dock-item img{width:50px;height:50px;cursor:pointer;transition:.2s;}
+.dock-item img:hover{transform:scale(1.35);}
+.window{position:absolute;width:360px;height:220px;background:#1c1c2e;border-radius:28px;display:none;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.7);overflow:hidden;}
+.title{background:#2a2a3f;color:white;padding:6px;cursor:grab;display:flex;align-items:center;gap:8px;touch-action:none;}
+.winbtn{width:12px;height:12px;border-radius:50%;cursor:pointer;}
+.close{background:#ff5f57}.min{background:#febc2e}.max{background:#28c840;}
+#output{flex:1;padding:10px;overflow:auto;background:#0f111a;color:#00ffcc;}
+#cmd{border:none;border-top:1px solid #333;background:#0f111a;color:#00ffcc;padding:8px;outline:none;}
+.resize{position:absolute;width:16px;height:16px;background:rgba(255,255,255,.25);border-radius:50%;}
+.resize:hover{background:#00ffcc;}
+.br{bottom:0;right:0;cursor:nwse-resize}.bl{bottom:0;left:0;cursor:nesw-resize}.tr{top:0;right:0;cursor:nesw-resize}.tl{top:0;left:0;cursor:nwse-resize;}
+/* File Manager UI */
+#file-manager-content{flex:1;padding:10px;background:#111;color:white;overflow:auto;}
+.folder{background:#2a2a3f;padding:4px 8px;margin:4px 0;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.folder span{user-select:none;}
+.delete-folder{color:#ff5f57;cursor:pointer;margin-left:10px;}
 </style>
 </head>
-
 <body>
 
 <div id="dock">
-<div class="dock-item" onclick="openTerminal()">
-<img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png  ">
-</div>
-<div class="dock-item" onclick="openFileManager()">
-<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23ffffff' d='M10,30 L10,10 L40,10 L50,20 L80,20 L80,80 L10,80 Z'/%3E%3C/svg%3E">
-</div>
+<div class="dock-item" onclick="openTerminal()"><img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png"></div>
+<div class="dock-item" onclick="openFileManager()"><img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/folder-icon.png"></div>
 </div>
 
+<!-- TERMINAL -->
 <div class="window" id="terminal">
-
 <div class="title">
-
-<div class="winbtn close" onclick="closeWin()"></div>
-<div class="winbtn min" onclick="minWin()"></div>
-<div class="winbtn max" onclick="maxWin()"></div>
-
+<div class="winbtn close" onclick="closeWin('terminal')"></div>
+<div class="winbtn min" onclick="minWin('terminal')"></div>
+<div class="winbtn max" onclick="maxWin('terminal')"></div>
 <span style="margin-left:8px;">HyperDesk Terminal</span>
-
 </div>
-
 <div id="output"></div>
-
 <input id="cmd" placeholder="type command">
-
-<div class="resize br"></div>
-<div class="resize bl"></div>
-<div class="resize tr"></div>
-<div class="resize tl"></div>
-
+<div class="resize br"></div><div class="resize bl"></div><div class="resize tr"></div><div class="resize tl"></div>
 </div>
 
-<div class="window" id="filemanager">
-
+<!-- FILE MANAGER -->
+<div class="window" id="file-manager">
 <div class="title">
-
-<div class="winbtn close" onclick="closeFileManager()"></div>
-<div class="winbtn min" onclick="minFileManager()"></div>
-<div class="winbtn max" onclick="maxFileManager()"></div>
-
-<span style="margin-left:8px;">HyperDesk File Manager</span>
-
+<div class="winbtn close" onclick="closeWin('file-manager')"></div>
+<div class="winbtn min" onclick="minWin('file-manager')"></div>
+<div class="winbtn max" onclick="maxWin('file-manager')"></div>
+<span style="margin-left:8px;">File Manager</span>
 </div>
-
-<div class="file-manager">
-    <ul class="breadcrumb" id="breadcrumb"></ul>
-    <input type="text" class="folder-input" id="folderInput" placeholder="Enter folder name">
-    <button onclick="createFolder()" style="border:none; background:#28c840; color:white; padding:6px; cursor:pointer; margin-bottom:8px;">Create Folder</button>
-    <ul class="folder-list" id="folderList"></ul>
-</div>
-
-<div class="resize br"></div>
-<div class="resize bl"></div>
-<div class="resize tr"></div>
-<div class="resize tl"></div>
-
+<div id="file-manager-content"></div>
+<div class="resize br"></div><div class="resize bl"></div><div class="resize tr"></div><div class="resize tl"></div>
 </div>
 
 <script>
+let defaultState={width:360,height:220};
+function openWindow(win){win.style.display="flex";win.style.width=defaultState.width+"px";win.style.height=defaultState.height+"px";win.style.left=(window.innerWidth/2-defaultState.width/2)+"px";win.style.top=(window.innerHeight/2-defaultState.height/2)+"px";}
+function openTerminal(){openWindow(document.getElementById("terminal"));}
+function openFileManager(){openWindow(document.getElementById("file-manager"));renderFileManager();}
+function minWin(id){document.getElementById(id).style.display="none";}
+function closeWin(id){let win=document.getElementById(id);win.style.display="none";if(id==='terminal'){document.getElementById("output").innerHTML="";document.getElementById("cmd").value="";}}
+let maximized=false;
+function maxWin(id){let win=document.getElementById(id);let sideMargin=40;let topMargin=20;let dockHeight=65+20;if(!maximized){win.dataset.prevTop=win.offsetTop;win.dataset.prevLeft=win.offsetLeft;win.dataset.prevWidth=win.offsetWidth;win.dataset.prevHeight=win.offsetHeight;win.style.left=sideMargin+"px";win.style.top=topMargin+"px";win.style.width=(window.innerWidth-sideMargin*2)+"px";win.style.height=(window.innerHeight-dockHeight-topMargin)+"px";maximized=true;}else{win.style.top=win.dataset.prevTop+"px";win.style.left=win.dataset.prevLeft+"px";win.style.width=win.dataset.prevWidth+"px";win.style.height=win.dataset.prevHeight+"px";maximized=false;}}
 
-let win=document.getElementById("terminal")
-let dock=document.getElementById("dock")
-let title=win.querySelector(".title")
-let output=document.getElementById("output")
+/* DRAG AND RESIZE */
+function makeDraggable(win){let startX,startY,dragging=false; let resizeDir=null;
+let title=win.querySelector(".title"); title.addEventListener("pointerdown",e=>{dragging=true;startX=e.clientX-win.offsetLeft;startY=e.clientY-win.offsetTop;});
+document.addEventListener("pointermove",e=>{if(dragging){let dockTop=window.innerHeight-65-10;let newX=e.clientX-startX;let newY=e.clientY-startY;if(newY<0)newY=0;if(newY+win.offsetHeight>dockTop)newY=dockTop-win.offsetHeight;win.style.left=newX+"px";win.style.top=newY+"px";}if(resizeDir){let rect=win.getBoundingClientRect();if(resizeDir==="br"){win.style.width=e.clientX-rect.left+"px";win.style.height=e.clientY-rect.top+"px";}if(resizeDir==="bl"){let newWidth=rect.right-e.clientX;win.style.width=newWidth+"px";win.style.left=e.clientX+"px";win.style.height=e.clientY-rect.top+"px";}if(resizeDir==="tr"){let newHeight=rect.bottom-e.clientY;win.style.height=newHeight+"px";win.style.top=e.clientY+"px";win.style.width=e.clientX-rect.left+"px";}if(resizeDir==="tl"){let newWidth=rect.right-e.clientX;let newHeight=rect.bottom-e.clientY;win.style.width=newWidth+"px";win.style.left=e.clientX+"px";win.style.height=newHeight+"px";win.style.top=e.clientY+"px";}}});
+document.addEventListener("pointerup",()=>{dragging=false;resizeDir=null;});
+win.querySelectorAll(".resize").forEach(h=>{h.addEventListener("pointerdown",e=>{resizeDir=h.classList[1];e.stopPropagation();});});}
+makeDraggable(document.getElementById("terminal"));
+makeDraggable(document.getElementById("file-manager"));
 
-/* OPEN TERMINAL */
+/* TERMINAL */
 
-function openTerminal(){
+let cmd=document.getElementById("cmd"),output=document.getElementById("output");
 
-let width=360
-let height=220
+/* SIMPLE FILESYSTEM */
 
-win.style.display="flex"
-win.style.width=width+"px"
-win.style.height=height+"px"
+let fileSystem=JSON.parse(localStorage.getItem("hyperdeskFS")||'{"root":{}}');
 
-/* center window */
+function saveFS(){localStorage.setItem("hyperdeskFS",JSON.stringify(fileSystem));}
+function createFolder(name,path){let folders=path.split("/").filter(Boolean);let current=fileSystem.root;for(let f of folders){if(!current[f])current[f]={};current=current[f];}if(!current[name])current[name]={};saveFS();renderFileManager();}
+function deleteFolder(path){let parts=path.split("/").filter(Boolean);let name=parts.pop();let current=fileSystem.root;for(let f of parts){current=current[f];}delete current[name];saveFS();renderFileManager();}
 
-win.style.left=(window.innerWidth/2-width/2)+"px"
-win.style.top=(window.innerHeight/2-height/2)+"px"
+function renderFileManager(){let container=document.getElementById("file-manager-content");container.innerHTML="";function renderFolder(obj,path){for(let f in obj){let div=document.createElement("div");div.className="folder";let span=document.createElement("span");span.textContent=f;div.appendChild(span);let del=document.createElement("span");del.textContent="✕";del.className="delete-folder";del.onclick=()=>{deleteFolder(path+"/"+f);};div.appendChild(del);container.appendChild(div);renderFolder(obj[f],path+"/"+f);}}renderFolder(fileSystem.root,"");}
 
-}
-
-/* MINIMIZE */
-
-function minWin(){
-win.style.display="none"
-}
-
-/* CLOSE (reset terminal output) */
-
-function closeWin(){
-win.style.display="none"
-output.innerHTML=""
-}
-
-/* MAXIMIZE WITH MARGINS */
-
-let maximized=false
-
-function maxWin(){
-
-let sideMargin=40
-let topMargin=20
-let dockHeight=dock.offsetHeight+20
-
-if(!maximized){
-
-win.dataset.prevTop=win.offsetTop
-win.dataset.prevLeft=win.offsetLeft
-win.dataset.prevWidth=win.offsetWidth
-win.dataset.prevHeight=win.offsetHeight
-
-win.style.left=sideMargin+"px"
-win.style.top=topMargin+"px"
-win.style.width=(window.innerWidth-sideMargin*2)+"px"
-win.style.height=(window.innerHeight-dockHeight-topMargin)+"px"
-
-maximized=true
-
-}else{
-
-win.style.top=win.dataset.prevTop+"px"
-win.style.left=win.dataset.prevLeft+"px"
-win.style.width=win.dataset.prevWidth+"px"
-win.style.height=win.dataset.prevHeight+"px"
-
-maximized=false
-
-}
-
-}
-
-/* DRAGGING */
-
-let startX,startY,dragging=false
-
-title.addEventListener("pointerdown",e=>{
-dragging=true
-startX=e.clientX-win.offsetLeft
-startY=e.clientY-win.offsetTop
-})
-
-document.addEventListener("pointermove",e=>{
-
-if(!dragging)return
-
-let dockTop=window.innerHeight-dock.offsetHeight-10
-
-let newX=e.clientX-startX
-let newY=e.clientY-startY
-
-if(newY<0)newY=0
-if(newY+win.offsetHeight>dockTop)newY=dockTop-win.offsetHeight
-
-win.style.left=newX+"px"
-win.style.top=newY+"px"
-
-})
-
-document.addEventListener("pointerup",()=>{
-dragging=false
-
-if(win.offsetTop<10){
-maxWin()
-}
-
-})
-
-/* RESIZE */
-
-let resizeDir=null
-
-document.querySelectorAll(".resize").forEach(h=>{
-
-h.addEventListener("pointerdown",e=>{
-resizeDir=h.classList[1]
-e.stopPropagation()
-})
-
-})
-
-document.addEventListener("pointermove",e=>{
-
-if(!resizeDir)return
-
-let rect=win.getBoundingClientRect()
-
-if(resizeDir==="br"){
-win.style.width=e.clientX-rect.left+"px"
-win.style.height=e.clientY-rect.top+"px"
-}
-
-if(resizeDir==="bl"){
-let newWidth=rect.right-e.clientX
-win.style.width=newWidth+"px"
-win.style.left=e.clientX+"px"
-win.style.height=e.clientY-rect.top+"px"
-}
-
-if(resizeDir==="tr"){
-let newHeight=rect.bottom-e.clientY
-win.style.height=newHeight+"px"
-win.style.top=e.clientY+"px"
-win.style.width=e.clientX-rect.left+"px"
-}
-
-if(resizeDir==="tl"){
-let newWidth=rect.right-e.clientX
-let newHeight=rect.bottom-e.clientY
-win.style.width=newWidth+"px"
-win.style.left=e.clientX+"px"
-win.style.height=newHeight+"px"
-win.style.top=e.clientY+"px"
-}
-
-})
-
-document.addEventListener("pointerup",()=>{
-resizeDir=null
-})
-
-/* TERMINAL COMMAND */
-
-let cmd=document.getElementById("cmd")
+/* TERMINAL COMMANDS */
 
 cmd.addEventListener("keydown",e=>{
-
 if(e.key==="Enter"){
-
-let text=cmd.value.trim()
-
-if(text==="whoami"){
-output.innerHTML+="<div>/</div>"
-}else{
-output.innerHTML+="<div>Unknown command</div>"
-}
-
-cmd.value=""
-output.scrollTop=output.scrollHeight
-
-}
-
-})
-
-// NEW FILE MANAGER LOGIC
-
-let fmWin = document.getElementById("filemanager")
-let fmTitle = fmWin.querySelector(".title")
-
-// Initialize folders from localStorage
-let allFolders = JSON.parse(localStorage.getItem('hyperdesk_folders') || '[]')
-let currentPath = []
-
-function saveFolders() {
-    localStorage.setItem('hyperdesk_folders', JSON.stringify(allFolders))
-}
-
-function getCurrentFolderPath() {
-    return '/' + currentPath.join('/')
-}
-
-function getFoldersAtPath(path) {
-    let folders = allFolders
-    if(path === '/') {
-        return folders.filter(f => f.path === '/')
-    }
-    
-    return folders.filter(f => f.path === path)
-}
-
-function updateBreadcrumb() {
-    const breadcrumbEl = document.getElementById('breadcrumb')
-    breadcrumbEl.innerHTML = ''
-    
-    const homeLi = document.createElement('li')
-    homeLi.textContent = 'Home'
-    homeLi.onclick = () => {
-        currentPath = []
-        renderFolderList()
-    }
-    breadcrumbEl.appendChild(homeLi)
-    
-    let tempPath = []
-    for(const segment of currentPath) {
-        tempPath.push(segment)
-        const li = document.createElement('li')
-        li.textContent = segment
-        li.onclick = () => {
-            currentPath = [...tempPath]
-            renderFolderList()
-        }
-        breadcrumbEl.appendChild(li)
-    }
-}
-
-function renderFolderList() {
-    const folderListEl = document.getElementById('folderList')
-    const currentPathStr = getCurrentFolderPath()
-    const folders = getFoldersAtPath(currentPathStr)
-    
-    folderListEl.innerHTML = ''
-    
-    for(const folder of folders) {
-        const li = document.createElement('li')
-        li.className = 'folder-item'
-        
-        const span = document.createElement('span')
-        span.textContent = folder.name
-        
-        const deleteBtn = document.createElement('button')
-        deleteBtn.className = 'delete-btn'
-        deleteBtn.textContent = 'X'
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation()
-            deleteFolder(folder.id)
-        }
-        
-        li.appendChild(span)
-        li.appendChild(deleteBtn)
-        
-        li.onclick = () => {
-            currentPath.push(folder.name)
-            renderFolderList()
-        }
-        
-        folderListEl.appendChild(li)
-    }
-    
-    updateBreadcrumb()
-}
-
-function createFolder() {
-    const input = document.getElementById('folderInput')
-    const name = input.value.trim()
-    if (!name) return
-    
-    const newPath = getCurrentFolderPath()
-    
-    // Check if folder already exists at this path
-    const existing = allFolders.find(f => f.path === newPath && f.name === name)
-    if(existing) {
-        alert('Folder already exists!')
-        return
-    }
-    
-    const newFolder = {
-        id: Date.now(), // unique ID
-        name: name,
-        path: newPath
-    }
-    
-    allFolders.push(newFolder)
-    saveFolders()
-    input.value = ''
-    renderFolderList()
-}
-
-function deleteFolder(id) {
-    // Remove the folder
-    allFolders = allFolders.filter(f => f.id !== id)
-    
-    // Also remove any subfolders
-    const folderToDelete = {id: id} // just to find the path
-    // We'll get the path by finding the original object first
-    const originalObj = allFolders.find(f => f.id === id)
-    if(originalObj) {
-        const fullPath = originalObj.path + '/' + originalObj.name
-        allFolders = allFolders.filter(f => !f.path.startsWith(fullPath + '/'))
-    }
-    
-    saveFolders()
-    renderFolderList()
-}
-
-function openFileManager() {
-    let width=360
-    let height=220
-    
-    fmWin.style.display="flex"
-    fmWin.style.width=width+"px"
-    fmWin.style.height=height+"px"
-    
-    /* center window */
-    fmWin.style.left=(window.innerWidth/2-width/2)+"px"
-    fmWin.style.top=(window.innerHeight/2-height/2)+"px"
-    
-    // Reset to root on open
-    currentPath = []
-    renderFolderList()
-}
-
-function closeFileManager() {
-    fmWin.style.display="none"
-}
-
-function minFileManager() {
-    fmWin.style.display="none"
-}
-
-let fmMaximized = false
-
-function maxFileManager() {
-    let sideMargin=40
-    let topMargin=20
-    let dockHeight=dock.offsetHeight+20
-    
-    if(!fmMaximized) {
-        fmWin.dataset.prevTop=fmWin.offsetTop
-        fmWin.dataset.prevLeft=fmWin.offsetLeft
-        fmWin.dataset.prevWidth=fmWin.offsetWidth
-        fmWin.dataset.prevHeight=fmWin.offsetHeight
-        
-        fmWin.style.left=sideMargin+"px"
-        fmWin.style.top=topMargin+"px"
-        fmWin.style.width=(window.innerWidth-sideMargin*2)+"px"
-        fmWin.style.height=(window.innerHeight-dockHeight-topMargin)+"px"
-        
-        fmMaximized=true
-    } else {
-        fmWin.style.top=fmWin.dataset.prevTop+"px"
-        fmWin.style.left=fmWin.dataset.prevLeft+"px"
-        fmWin.style.width=fmWin.dataset.prevWidth+"px"
-        fmWin.style.height=fmWin.dataset.prevHeight+"px"
-        
-        fmMaximized=false
-    }
-}
-
-// Set up dragging for file manager window
-let fmStartX, fmStartY, fmDragging=false
-
-fmTitle.addEventListener("pointerdown",e=>{
-fmDragging=true
-fmStartX=e.clientX-fmWin.offsetLeft
-fmStartY=e.clientY-fmWin.offsetTop
-})
-
-document.addEventListener("pointermove",e=>{
-if(fmDragging) {
-    let dockTop=window.innerHeight-dock.offsetHeight-10
-    
-    let newX=e.clientX-fmStartX
-    let newY=e.clientY-fmStartY
-    
-    if(newY<0)newY=0
-    if(newY+fmWin.offsetHeight>dockTop)newY=dockTop-fmWin.offsetHeight
-    
-    fmWin.style.left=newX+"px"
-    fmWin.style.top=newY+"px"
-}
-})
-
-document.addEventListener("pointerup",()=>{
-fmDragging=false
-
-if(fmWin.offsetTop<10){
-maxFileManager()
-}
-})
-
-// Set up resizing for file manager window
-let fmResizeDir=null
-
-fmWin.querySelectorAll(".resize").forEach(h=>{
-h.addEventListener("pointerdown",e=>{
-fmResizeDir=h.classList[1]
-e.stopPropagation()
-})
-})
-
-document.addEventListener("pointermove",e=>{
-if(fmResizeDir) {
-    let rect=fmWin.getBoundingClientRect()
-    
-    if(fmResizeDir==="br"){
-        fmWin.style.width=e.clientX-rect.left+"px"
-        fmWin.style.height=e.clientY-rect.top+"px"
-    }
-
-    if(fmResizeDir==="bl"){
-        let newWidth=rect.right-e.clientX
-        fmWin.style.width=newWidth+"px"
-        fmWin.style.left=e.clientX+"px"
-        fmWin.style.height=e.clientY-rect.top+"px"
-    }
-
-    if(fmResizeDir==="tr"){
-        let newHeight=rect.bottom-e.clientY
-        fmWin.style.height=newHeight+"px"
-        fmWin.style.top=e.clientY+"px"
-        fmWin.style.width=e.clientX-rect.left+"px"
-    }
-
-    if(fmResizeDir==="tl"){
-        let newWidth=rect.right-e.clientX
-        let newHeight=rect.bottom-e.clientY
-        fmWin.style.width=newWidth+"px"
-        fmWin.style.left=e.clientX+"px"
-        fmWin.style.height=newHeight+"px"
-        fmWin.style.top=e.clientY+"px"
-    }
-}
-})
-
-document.addEventListener("pointerup",()=>{
-fmResizeDir=null
-})
-
-// Initialize on load
-window.onload = function() {
-    renderFolderList()
-}
+let text=cmd.value.trim();
+let m=text.match(/^create folder (\S+) at (\/.*)$/);
+if(m){createFolder(m[1],m[2]);output.innerHTML+="<div>Folder '"+m[1]+"' created at "+m[2]+"</div>";}else if(text==="whoami"){output.innerHTML+="<div>/</div>";}else{output.innerHTML+="<div>Unknown command</div>";}
+cmd.value=""; output.scrollTop=output.scrollHeight;
+});
 
 </script>
-
 </body>
 </html>
