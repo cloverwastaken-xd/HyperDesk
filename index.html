@@ -101,6 +101,79 @@ padding:8px;
 outline:none;
 }
 
+/* FILE MANAGER */
+
+.file-manager {
+    flex:1;
+    padding:10px;
+    overflow:auto;
+    background:#0f111a;
+    color:#00ffcc;
+    display:flex;
+    flex-direction:column;
+}
+
+.folder-input {
+    border:none;
+    background:#2a2a3f;
+    color:#00ffcc;
+    padding:8px;
+    margin-bottom:8px;
+    outline:none;
+}
+
+.folder-list {
+    list-style-type:none;
+    padding:0;
+    margin:0;
+    flex:1;
+    overflow-y:auto;
+}
+
+.folder-item {
+    padding:6px;
+    cursor:pointer;
+    border-radius:4px;
+    margin:2px 0;
+}
+
+.folder-item:hover {
+    background-color:#2a2a3f;
+}
+
+.delete-btn {
+    float:right;
+    background:#ff5f57;
+    color:white;
+    border:none;
+    padding:2px 6px;
+    cursor:pointer;
+    border-radius:3px;
+    font-size:12px;
+}
+
+.delete-btn:hover {
+    opacity:0.8;
+}
+
+.breadcrumb {
+    margin:0 0 10px 0;
+    padding:0;
+    list-style-type:none;
+    display:flex;
+    gap:5px;
+}
+
+.breadcrumb li {
+    cursor:pointer;
+}
+
+.breadcrumb li:not(:last-child)::after {
+    content:' > ';
+    margin-left:5px;
+    cursor:default;
+}
+
 /* RESIZE HANDLES */
 
 .resize{
@@ -127,7 +200,10 @@ background:#00ffcc;
 
 <div id="dock">
 <div class="dock-item" onclick="openTerminal()">
-<img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png">
+<img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png  ">
+</div>
+<div class="dock-item" onclick="openFileManager()">
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23ffffff' d='M10,30 L10,10 L40,10 L50,20 L80,20 L80,80 L10,80 Z'/%3E%3C/svg%3E">
 </div>
 </div>
 
@@ -146,6 +222,32 @@ background:#00ffcc;
 <div id="output"></div>
 
 <input id="cmd" placeholder="type command">
+
+<div class="resize br"></div>
+<div class="resize bl"></div>
+<div class="resize tr"></div>
+<div class="resize tl"></div>
+
+</div>
+
+<div class="window" id="filemanager">
+
+<div class="title">
+
+<div class="winbtn close" onclick="closeFileManager()"></div>
+<div class="winbtn min" onclick="minFileManager()"></div>
+<div class="winbtn max" onclick="maxFileManager()"></div>
+
+<span style="margin-left:8px;">HyperDesk File Manager</span>
+
+</div>
+
+<div class="file-manager">
+    <ul class="breadcrumb" id="breadcrumb"></ul>
+    <input type="text" class="folder-input" id="folderInput" placeholder="Enter folder name">
+    <button onclick="createFolder()" style="border:none; background:#28c840; color:white; padding:6px; cursor:pointer; margin-bottom:8px;">Create Folder</button>
+    <ul class="folder-list" id="folderList"></ul>
+</div>
 
 <div class="resize br"></div>
 <div class="resize bl"></div>
@@ -340,6 +442,275 @@ output.scrollTop=output.scrollHeight
 }
 
 })
+
+// NEW FILE MANAGER LOGIC
+
+let fmWin = document.getElementById("filemanager")
+let fmTitle = fmWin.querySelector(".title")
+
+// Initialize folders from localStorage
+let allFolders = JSON.parse(localStorage.getItem('hyperdesk_folders') || '[]')
+let currentPath = []
+
+function saveFolders() {
+    localStorage.setItem('hyperdesk_folders', JSON.stringify(allFolders))
+}
+
+function getCurrentFolderPath() {
+    return '/' + currentPath.join('/')
+}
+
+function getFoldersAtPath(path) {
+    let folders = allFolders
+    if(path === '/') {
+        return folders.filter(f => f.path === '/')
+    }
+    
+    return folders.filter(f => f.path === path)
+}
+
+function updateBreadcrumb() {
+    const breadcrumbEl = document.getElementById('breadcrumb')
+    breadcrumbEl.innerHTML = ''
+    
+    const homeLi = document.createElement('li')
+    homeLi.textContent = 'Home'
+    homeLi.onclick = () => {
+        currentPath = []
+        renderFolderList()
+    }
+    breadcrumbEl.appendChild(homeLi)
+    
+    let tempPath = []
+    for(const segment of currentPath) {
+        tempPath.push(segment)
+        const li = document.createElement('li')
+        li.textContent = segment
+        li.onclick = () => {
+            currentPath = [...tempPath]
+            renderFolderList()
+        }
+        breadcrumbEl.appendChild(li)
+    }
+}
+
+function renderFolderList() {
+    const folderListEl = document.getElementById('folderList')
+    const currentPathStr = getCurrentFolderPath()
+    const folders = getFoldersAtPath(currentPathStr)
+    
+    folderListEl.innerHTML = ''
+    
+    for(const folder of folders) {
+        const li = document.createElement('li')
+        li.className = 'folder-item'
+        
+        const span = document.createElement('span')
+        span.textContent = folder.name
+        
+        const deleteBtn = document.createElement('button')
+        deleteBtn.className = 'delete-btn'
+        deleteBtn.textContent = 'X'
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation()
+            deleteFolder(folder.id)
+        }
+        
+        li.appendChild(span)
+        li.appendChild(deleteBtn)
+        
+        li.onclick = () => {
+            currentPath.push(folder.name)
+            renderFolderList()
+        }
+        
+        folderListEl.appendChild(li)
+    }
+    
+    updateBreadcrumb()
+}
+
+function createFolder() {
+    const input = document.getElementById('folderInput')
+    const name = input.value.trim()
+    if (!name) return
+    
+    const newPath = getCurrentFolderPath()
+    
+    // Check if folder already exists at this path
+    const existing = allFolders.find(f => f.path === newPath && f.name === name)
+    if(existing) {
+        alert('Folder already exists!')
+        return
+    }
+    
+    const newFolder = {
+        id: Date.now(), // unique ID
+        name: name,
+        path: newPath
+    }
+    
+    allFolders.push(newFolder)
+    saveFolders()
+    input.value = ''
+    renderFolderList()
+}
+
+function deleteFolder(id) {
+    // Remove the folder
+    allFolders = allFolders.filter(f => f.id !== id)
+    
+    // Also remove any subfolders
+    const folderToDelete = {id: id} // just to find the path
+    // We'll get the path by finding the original object first
+    const originalObj = allFolders.find(f => f.id === id)
+    if(originalObj) {
+        const fullPath = originalObj.path + '/' + originalObj.name
+        allFolders = allFolders.filter(f => !f.path.startsWith(fullPath + '/'))
+    }
+    
+    saveFolders()
+    renderFolderList()
+}
+
+function openFileManager() {
+    let width=360
+    let height=220
+    
+    fmWin.style.display="flex"
+    fmWin.style.width=width+"px"
+    fmWin.style.height=height+"px"
+    
+    /* center window */
+    fmWin.style.left=(window.innerWidth/2-width/2)+"px"
+    fmWin.style.top=(window.innerHeight/2-height/2)+"px"
+    
+    // Reset to root on open
+    currentPath = []
+    renderFolderList()
+}
+
+function closeFileManager() {
+    fmWin.style.display="none"
+}
+
+function minFileManager() {
+    fmWin.style.display="none"
+}
+
+let fmMaximized = false
+
+function maxFileManager() {
+    let sideMargin=40
+    let topMargin=20
+    let dockHeight=dock.offsetHeight+20
+    
+    if(!fmMaximized) {
+        fmWin.dataset.prevTop=fmWin.offsetTop
+        fmWin.dataset.prevLeft=fmWin.offsetLeft
+        fmWin.dataset.prevWidth=fmWin.offsetWidth
+        fmWin.dataset.prevHeight=fmWin.offsetHeight
+        
+        fmWin.style.left=sideMargin+"px"
+        fmWin.style.top=topMargin+"px"
+        fmWin.style.width=(window.innerWidth-sideMargin*2)+"px"
+        fmWin.style.height=(window.innerHeight-dockHeight-topMargin)+"px"
+        
+        fmMaximized=true
+    } else {
+        fmWin.style.top=fmWin.dataset.prevTop+"px"
+        fmWin.style.left=fmWin.dataset.prevLeft+"px"
+        fmWin.style.width=fmWin.dataset.prevWidth+"px"
+        fmWin.style.height=fmWin.dataset.prevHeight+"px"
+        
+        fmMaximized=false
+    }
+}
+
+// Set up dragging for file manager window
+let fmStartX, fmStartY, fmDragging=false
+
+fmTitle.addEventListener("pointerdown",e=>{
+fmDragging=true
+fmStartX=e.clientX-fmWin.offsetLeft
+fmStartY=e.clientY-fmWin.offsetTop
+})
+
+document.addEventListener("pointermove",e=>{
+if(fmDragging) {
+    let dockTop=window.innerHeight-dock.offsetHeight-10
+    
+    let newX=e.clientX-fmStartX
+    let newY=e.clientY-fmStartY
+    
+    if(newY<0)newY=0
+    if(newY+fmWin.offsetHeight>dockTop)newY=dockTop-fmWin.offsetHeight
+    
+    fmWin.style.left=newX+"px"
+    fmWin.style.top=newY+"px"
+}
+})
+
+document.addEventListener("pointerup",()=>{
+fmDragging=false
+
+if(fmWin.offsetTop<10){
+maxFileManager()
+}
+})
+
+// Set up resizing for file manager window
+let fmResizeDir=null
+
+fmWin.querySelectorAll(".resize").forEach(h=>{
+h.addEventListener("pointerdown",e=>{
+fmResizeDir=h.classList[1]
+e.stopPropagation()
+})
+})
+
+document.addEventListener("pointermove",e=>{
+if(fmResizeDir) {
+    let rect=fmWin.getBoundingClientRect()
+    
+    if(fmResizeDir==="br"){
+        fmWin.style.width=e.clientX-rect.left+"px"
+        fmWin.style.height=e.clientY-rect.top+"px"
+    }
+
+    if(fmResizeDir==="bl"){
+        let newWidth=rect.right-e.clientX
+        fmWin.style.width=newWidth+"px"
+        fmWin.style.left=e.clientX+"px"
+        fmWin.style.height=e.clientY-rect.top+"px"
+    }
+
+    if(fmResizeDir==="tr"){
+        let newHeight=rect.bottom-e.clientY
+        fmWin.style.height=newHeight+"px"
+        fmWin.style.top=e.clientY+"px"
+        fmWin.style.width=e.clientX-rect.left+"px"
+    }
+
+    if(fmResizeDir==="tl"){
+        let newWidth=rect.right-e.clientX
+        let newHeight=rect.bottom-e.clientY
+        fmWin.style.width=newWidth+"px"
+        fmWin.style.left=e.clientX+"px"
+        fmWin.style.height=newHeight+"px"
+        fmWin.style.top=e.clientY+"px"
+    }
+}
+})
+
+document.addEventListener("pointerup",()=>{
+fmResizeDir=null
+})
+
+// Initialize on load
+window.onload = function() {
+    renderFolderList()
+}
 
 </script>
 
