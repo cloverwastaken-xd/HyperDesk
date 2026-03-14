@@ -1,125 +1,336 @@
-<div id="dock">
-  <div class="dock-item" onclick="openTerminal()">
-    <img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png">
-  </div>
-</div>
-
-<div class="window" id="terminal">
-  <div class="title">HyperDesk Terminal</div>
-  <div id="output"></div>
-  <input id="cmd" placeholder="type command">
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>HyperDesk</title>
 
 <style>
 body{
   margin:0;
+  font-family:'Fira Code', monospace;
   background:#0f111a;
-  font-family:monospace;
+  overflow:hidden;
 }
 
 /* Dock */
+
 #dock{
   position:fixed;
-  bottom:12px;
-  left:50%;
-  transform:translateX(-50%);
-  width:220px;
+  bottom:0;
+  width:100%;
   height:60px;
   display:flex;
   justify-content:center;
   align-items:center;
-  backdrop-filter:blur(12px);
-  background:rgba(40,40,40,.45);
-  border-radius:12px;
+  backdrop-filter:blur(10px);
+  background:rgba(50,50,50,0.5);
+  box-shadow:0 -5px 15px rgba(0,0,0,0.4);
+  z-index:999;
 }
 
-.dock-item img{
-  width:48px;
-  height:48px;
+.dock-item{
+  width:60px;
+  height:60px;
+  margin:0 12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.icon-layer{
+  width:50px;
+  height:50px;
+  transition:transform 0.2s;
+}
+
+.icon-layer img{
+  width:100%;
+  height:100%;
+}
+
+.dock-item:hover .icon-layer{
+  transform:scale(1.4);
+}
+
+/* Window */
+
+.window{
+  width:400px;
+  height:260px;
+  position:absolute;
+  top:120px;
+  left:120px;
+  background:#1c1c2e;
+  border-radius:12px;
+  border:1px solid #333;
+  box-shadow:0 20px 40px rgba(0,0,0,0.7);
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* Title bar */
+
+.titlebar{
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 8px;
+  background:#22223a;
+  color:white;
+  cursor:move;
+  user-select:none;
+}
+
+.window-controls{
+  display:flex;
+  gap:6px;
+}
+
+.btn{
+  width:12px;
+  height:12px;
+  border-radius:50%;
   cursor:pointer;
 }
 
-/* Terminal */
-.window{
-  position:absolute;
-  width:420px;
-  height:280px;
-  top:100px;
-  left:100px;
-  background:#1c1c2e;
-  border-radius:10px;
-  display:none;
-  flex-direction:column;
-}
+.close{background:#ff5f56;}
+.min{background:#ffbd2e;}
 
-/* Drag bar */
 .title{
-  padding:8px;
-  background:#222;
-  color:white;
-  cursor:grab;
-  user-select:none;
-
-  /* prevents mobile scroll */
-  touch-action:none;
+  font-size:13px;
 }
 
-/* Terminal output */
+/* Terminal */
+
 #output{
   flex:1;
-  padding:10px;
   background:#0f111a;
   color:#00ffcc;
+  padding:10px;
+  overflow-y:auto;
+  font-size:14px;
 }
 
 #cmd{
   border:none;
-  border-top:1px solid #333;
+  outline:none;
   padding:8px;
   background:#0f111a;
   color:#00ffcc;
+  font-family:'Fira Code', monospace;
+  border-top:1px solid #333;
 }
+
+/* Resizers */
+
+.resizer{
+  position:absolute;
+  width:12px;
+  height:12px;
+}
+
+.br{bottom:0; right:0; cursor:nwse-resize;}
+.bl{bottom:0; left:0; cursor:nesw-resize;}
+.tr{top:0; right:0; cursor:nesw-resize;}
+.tl{top:0; left:0; cursor:nwse-resize;}
 </style>
+</head>
+
+<body>
+
+<!-- Dock -->
+
+<div id="dock">
+  <div class="dock-item" onclick="openTerminal()">
+    <div class="icon-layer">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Terminal_icon_macOS.png">
+    </div>
+  </div>
+</div>
+
+<!-- Terminal Window -->
+
+<div class="window" id="terminal">
+
+  <div class="titlebar" id="dragbar">
+    
+    <div class="window-controls">
+      <div class="btn close" onclick="closeTerminal()"></div>
+      <div class="btn min" onclick="minimizeTerminal()"></div>
+    </div>
+
+    <div class="title">HyperDesk Terminal</div>
+
+  </div>
+
+  <div id="output"></div>
+
+  <input id="cmd" placeholder="type command">
+
+  <div class="resizer br"></div>
+  <div class="resizer bl"></div>
+  <div class="resizer tr"></div>
+  <div class="resizer tl"></div>
+
+</div>
 
 <script>
-let win = document.getElementById("terminal")
-let title = win.querySelector(".title")
+
+const win = document.getElementById("terminal")
+const dock = document.getElementById("dock")
+const dragbar = document.getElementById("dragbar")
+const output = document.getElementById("output")
+const cmd = document.getElementById("cmd")
+
+let minimized = false
 
 function openTerminal(){
   win.style.display="flex"
 }
 
-let startX,startY,dragging=false
+function closeTerminal(){
+  win.style.display="none"
+}
 
-title.addEventListener("pointerdown",e=>{
-  dragging=true
-  startX=e.clientX-win.offsetLeft
-  startY=e.clientY-win.offsetTop
+function minimizeTerminal(){
+
+  if(minimized){
+    win.style.height="260px"
+    minimized=false
+  }else{
+    win.style.height="32px"
+    minimized=true
+  }
+
+}
+
+/* Dragging */
+
+dragbar.addEventListener("mousedown",function(e){
+
+  const offsetX = e.clientX - win.offsetLeft
+  const offsetY = e.clientY - win.offsetTop
+
+  function move(e){
+
+    let x = e.clientX - offsetX
+    let y = e.clientY - offsetY
+
+    const dockTop = window.innerHeight - dock.offsetHeight
+
+    if(y < 0){
+
+      win.style.top="0px"
+      win.style.left="0px"
+      win.style.width="100%"
+      win.style.height=dockTop+"px"
+      return
+
+    }
+
+    if(y + win.offsetHeight > dockTop){
+      y = dockTop - win.offsetHeight
+    }
+
+    win.style.left = x+"px"
+    win.style.top = y+"px"
+
+  }
+
+  document.addEventListener("mousemove",move)
+
+  document.addEventListener("mouseup",function(){
+    document.removeEventListener("mousemove",move)
+  },{once:true})
+
 })
 
-document.addEventListener("pointermove",e=>{
-  if(!dragging) return
-  win.style.left=e.clientX-startX+"px"
-  win.style.top=e.clientY-startY+"px"
+/* Resizing */
+
+document.querySelectorAll(".resizer").forEach(resizer=>{
+
+  resizer.addEventListener("mousedown",function(e){
+
+    e.preventDefault()
+
+    const startX = e.clientX
+    const startY = e.clientY
+    const startWidth = win.offsetWidth
+    const startHeight = win.offsetHeight
+    const startLeft = win.offsetLeft
+    const startTop = win.offsetTop
+
+    function resize(e){
+
+      const dockTop = window.innerHeight - dock.offsetHeight
+
+      if(resizer.classList.contains("br")){
+        win.style.width = startWidth + (e.clientX - startX) + "px"
+        win.style.height = startHeight + (e.clientY - startY) + "px"
+      }
+
+      if(resizer.classList.contains("bl")){
+        win.style.width = startWidth - (e.clientX - startX) + "px"
+        win.style.left = startLeft + (e.clientX - startX) + "px"
+        win.style.height = startHeight + (e.clientY - startY) + "px"
+      }
+
+      if(resizer.classList.contains("tr")){
+        win.style.width = startWidth + (e.clientX - startX) + "px"
+        win.style.height = startHeight - (e.clientY - startY) + "px"
+        win.style.top = startTop + (e.clientY - startY) + "px"
+      }
+
+      if(resizer.classList.contains("tl")){
+        win.style.width = startWidth - (e.clientX - startX) + "px"
+        win.style.left = startLeft + (e.clientX - startX) + "px"
+        win.style.height = startHeight - (e.clientY - startY) + "px"
+        win.style.top = startTop + (e.clientY - startY) + "px"
+      }
+
+      if(win.offsetTop + win.offsetHeight > dockTop){
+        win.style.height = dockTop - win.offsetTop + "px"
+      }
+
+    }
+
+    document.addEventListener("mousemove",resize)
+
+    document.addEventListener("mouseup",function(){
+      document.removeEventListener("mousemove",resize)
+    },{once:true})
+
+  })
+
 })
 
-document.addEventListener("pointerup",()=>{
-  dragging=false
+/* Terminal */
+
+cmd.addEventListener("keydown",function(e){
+
+  if(e.key==="Enter"){
+
+    const text = cmd.value.trim()
+
+    output.innerHTML += "<div>> "+text+"</div>"
+
+    if(text==="whoami"){
+      output.innerHTML += "<div>/</div>"
+    }else{
+      output.innerHTML += "<div>Unknown command</div>"
+    }
+
+    cmd.value=""
+    output.scrollTop=output.scrollHeight
+
+  }
+
 })
 
-/* terminal commands */
-let cmd=document.getElementById("cmd")
-let output=document.getElementById("output")
-
-cmd.addEventListener("keydown",e=>{
- if(e.key==="Enter"){
-   let text=cmd.value.trim()
-   if(text==="whoami"){
-     output.innerHTML+="<div>/</div>"
-   }else{
-     output.innerHTML+="<div>Unknown command</div>"
-   }
-   cmd.value=""
- }
-})
 </script>
+
+</body>
+</html>
