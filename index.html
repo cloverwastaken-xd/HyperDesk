@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <style>
 
 body{
@@ -26,7 +27,7 @@ justify-content:center;
 align-items:center;
 background:rgba(40,40,40,.45);
 backdrop-filter:blur(14px);
-border-radius:14px;
+border-radius:20px;
 z-index:1000;
 }
 
@@ -47,14 +48,13 @@ transform:scale(1.35);
 position:absolute;
 width:420px;
 height:280px;
-top:100px;
-left:100px;
+top:120px;
+left:120px;
 background:#1c1c2e;
-border-radius:10px;
+border-radius:28px;
 display:none;
 flex-direction:column;
-box-shadow:0 20px 40px rgba(0,0,0,.7);
-resize:both;
+box-shadow:0 25px 60px rgba(0,0,0,.7);
 overflow:hidden;
 }
 
@@ -103,20 +103,35 @@ padding:8px;
 outline:none;
 }
 
+/* RESIZE HANDLES */
+
+.resize{
+position:absolute;
+width:16px;
+height:16px;
+background:rgba(255,255,255,.2);
+border-radius:50%;
+}
+
+.resize:hover{
+background:#00ffcc;
+}
+
+.br{bottom:0;right:0;cursor:nwse-resize}
+.bl{bottom:0;left:0;cursor:nesw-resize}
+.tr{top:0;right:0;cursor:nesw-resize}
+.tl{top:0;left:0;cursor:nwse-resize}
+
 </style>
 </head>
 
 <body>
-
-<!-- DOCK -->
 
 <div id="dock">
 <div class="dock-item" onclick="openTerminal()">
 <img src="https://icons.iconarchive.com/icons/mfayaz/color-stroked/128/terminal-icon.png">
 </div>
 </div>
-
-<!-- TERMINAL WINDOW -->
 
 <div class="window" id="terminal">
 
@@ -134,25 +149,55 @@ outline:none;
 
 <input id="cmd" placeholder="type command">
 
+<div class="resize br"></div>
+<div class="resize bl"></div>
+<div class="resize tr"></div>
+<div class="resize tl"></div>
+
 </div>
 
 <script>
 
 let win=document.getElementById("terminal")
-let title=win.querySelector(".title")
 let dock=document.getElementById("dock")
+let title=win.querySelector(".title")
+let output=document.getElementById("output")
+
+let defaultState={
+top:120,
+left:120,
+width:420,
+height:280
+}
+
+/* OPEN */
 
 function openTerminal(){
 win.style.display="flex"
 }
 
-function closeWin(){
-win.style.display="none"
-}
+/* MINIMIZE */
 
 function minWin(){
 win.style.display="none"
 }
+
+/* CLOSE + RESET */
+
+function closeWin(){
+
+win.style.display="none"
+
+win.style.top=defaultState.top+"px"
+win.style.left=defaultState.left+"px"
+win.style.width=defaultState.width+"px"
+win.style.height=defaultState.height+"px"
+
+output.innerHTML=""
+
+}
+
+/* MAXIMIZE */
 
 let maximized=false
 
@@ -162,10 +207,10 @@ if(!maximized){
 
 let dockHeight=dock.offsetHeight+20
 
-win.dataset.prevTop=win.style.top
-win.dataset.prevLeft=win.style.left
-win.dataset.prevWidth=win.style.width
-win.dataset.prevHeight=win.style.height
+win.dataset.prevTop=win.offsetTop
+win.dataset.prevLeft=win.offsetLeft
+win.dataset.prevWidth=win.offsetWidth
+win.dataset.prevHeight=win.offsetHeight
 
 win.style.top="0px"
 win.style.left="0px"
@@ -176,10 +221,10 @@ maximized=true
 
 }else{
 
-win.style.top=win.dataset.prevTop
-win.style.left=win.dataset.prevLeft
-win.style.width=win.dataset.prevWidth
-win.style.height=win.dataset.prevHeight
+win.style.top=win.dataset.prevTop+"px"
+win.style.left=win.dataset.prevLeft+"px"
+win.style.width=win.dataset.prevWidth+"px"
+win.style.height=win.dataset.prevHeight+"px"
 
 maximized=false
 
@@ -187,7 +232,7 @@ maximized=false
 
 }
 
-/* DRAGGING */
+/* DRAG WINDOW */
 
 let startX,startY,dragging=false
 
@@ -214,13 +259,8 @@ win.style.top=newY+"px"
 
 })
 
-document.addEventListener("pointerup",e=>{
-
-if(!dragging)return
-
+document.addEventListener("pointerup",()=>{
 dragging=false
-
-/* SNAP TO TOP FULLSCREEN */
 
 if(win.offsetTop<10){
 maxWin()
@@ -228,10 +268,62 @@ maxWin()
 
 })
 
-/* TERMINAL COMMANDS */
+/* RESIZE */
+
+let resizeDir=null
+
+document.querySelectorAll(".resize").forEach(h=>{
+
+h.addEventListener("pointerdown",e=>{
+resizeDir=h.classList[1]
+e.stopPropagation()
+})
+
+})
+
+document.addEventListener("pointermove",e=>{
+
+if(!resizeDir)return
+
+let rect=win.getBoundingClientRect()
+
+if(resizeDir==="br"){
+win.style.width=e.clientX-rect.left+"px"
+win.style.height=e.clientY-rect.top+"px"
+}
+
+if(resizeDir==="bl"){
+let newWidth=rect.right-e.clientX
+win.style.width=newWidth+"px"
+win.style.left=e.clientX+"px"
+win.style.height=e.clientY-rect.top+"px"
+}
+
+if(resizeDir==="tr"){
+let newHeight=rect.bottom-e.clientY
+win.style.height=newHeight+"px"
+win.style.top=e.clientY+"px"
+win.style.width=e.clientX-rect.left+"px"
+}
+
+if(resizeDir==="tl"){
+let newWidth=rect.right-e.clientX
+let newHeight=rect.bottom-e.clientY
+win.style.width=newWidth+"px"
+win.style.left=e.clientX+"px"
+win.style.height=newHeight+"px"
+win.style.top=e.clientY+"px"
+}
+
+})
+
+document.addEventListener("pointerup",()=>{
+resizeDir=null
+})
+
+/* TERMINAL */
 
 let cmd=document.getElementById("cmd")
-let output=document.getElementById("output")
 
 cmd.addEventListener("keydown",e=>{
 
